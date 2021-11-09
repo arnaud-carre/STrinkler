@@ -10,4 +10,5 @@ struct Args
 	const char* sOutFile;
 	bool data;
 	int preset;
+	bool mini;
 };
