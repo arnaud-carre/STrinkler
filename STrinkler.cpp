@@ -15,8 +15,6 @@ bool	ShrinklerDataPack(const BinaryBlob& in, BinaryBlob& out, int preset)
 	vector<unsigned> pack_buffer;
 	assert((preset >= 1) && (preset <= 9));
 
-	printf("Shrinkler packing %d bytes (using preset -%d)\n", in.GetSize() , preset);
-
 	RangeCoder *range_coder = new RangeCoder(LZEncoder::NUM_CONTEXTS + NUM_RELOC_CONTEXTS, pack_buffer);
 
 	// Crunch the data
@@ -38,9 +36,46 @@ bool	ShrinklerDataPack(const BinaryBlob& in, BinaryBlob& out, int preset)
 	return true;
 }
 
-bool	ArgParsing(int argc, char* argv[])
+bool	ArgParsing(int argc, char* argv[], Args& args)
 {
-	return true;
+	args.preset = 2;
+	args.data = false;
+
+	int fileCount = 0;
+	for (int i = 1; i < argc; i++)
+	{
+		if ('-' == argv[i][0])
+		{
+			if ('d' == argv[i][1])
+			{
+				args.data = true;
+			}
+			else
+			{
+				int p = atoi(argv[i]+1);
+				if ((p >= 1) && (p <= 9))
+				{
+					args.preset = p;
+				}
+				else
+				{
+					printf("ERROR: Unknow option %s\n", argv[i]);
+					return false;
+				}
+			}
+		}
+		else
+		{
+			if (0 == fileCount)
+				args.sInfile = argv[i];
+			else if (1 == fileCount)
+				args.sOutFile = argv[i];
+			else
+				return false;
+			fileCount++;
+		}
+	}
+	return (2 == fileCount);
 }
 
 void	Usage()
@@ -53,31 +88,37 @@ void	Usage()
 
 int main(int argc, char* argv[])
 {
-
 	printf(	"STrinkler v0.1\n"
 			"Shrinkler compression technology by Simon Christensen\n"
 			"Atari Executable support by Leonard/Oxygene\n\n");
 
-	if (!ArgParsing(argc, argv))
+	int ret = 0;
+
+	Args args;
+	if (!ArgParsing(argc, argv, args))
 	{
 		Usage();
-		return 0;
+		return -1;
 	}
 
 	BinaryBlob bin;
 	BinaryBlob bout;
 
-	if (bin.LoadFromFile("x:\\4kSOS\\4k-SOSR.prg"))
+	printf("Loading input file \"%s\"\n", args.sInfile);
+	if (bin.LoadFromFile(args.sInfile))
 	{
 		bool AtariExe = bin.IsAtariExecutable();
-		printf("Atari EXE: %s\n", AtariExe ? "Yes" : "No");
-
+		printf("  Atari EXE: %s\n", AtariExe ? "Yes" : "No");
+		printf("  Shrinkler packing %d bytes (using preset -%d)...\n", bin.GetSize(), args.preset);
 
 		ShrinklerDataPack(bin, bout, 3);
-		printf("Packed to %d bytes\n", bout.GetSize());
+		printf("  Packed down to %d bytes\n", bout.GetSize());
+	}
+	else
+	{
+		printf("ERROR: Unable to load \"%s\"\n", args.sInfile);
+		ret = -1;
 	}
 
-
-
-	return 0;
+	return ret;
 }
