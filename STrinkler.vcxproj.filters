@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Shrinkler">
+      <UniqueIdentifier>{1a2ab783-a085-401c-908a-033e9888ad44}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="STrinkler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BinaryBlob.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Shrinkler\AmigaWords.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\assert.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\Coder.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\CountingCoder.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\CuckooHash.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\DataFile.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\Decoder.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\Heap.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\LZDecoder.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\LZEncoder.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\LZParser.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\MatchFinder.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\Pack.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\RangeCoder.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\RangeDecoder.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\SizeMeasuringCoder.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="Shrinkler\SuffixArray.h">
+      <Filter>Shrinkler</Filter>
+    </ClInclude>
+    <ClInclude Include="STrinkler.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BinaryBlob.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
