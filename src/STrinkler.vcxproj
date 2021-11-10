@@ -157,21 +157,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BinaryBlob.h" />
-    <ClInclude Include="Shrinkler\AmigaWords.h" />
     <ClInclude Include="Shrinkler\assert.h" />
     <ClInclude Include="Shrinkler\Coder.h" />
     <ClInclude Include="Shrinkler\CountingCoder.h" />
     <ClInclude Include="Shrinkler\CuckooHash.h" />
-    <ClInclude Include="Shrinkler\DataFile.h" />
-    <ClInclude Include="Shrinkler\Decoder.h" />
     <ClInclude Include="Shrinkler\Heap.h" />
-    <ClInclude Include="Shrinkler\LZDecoder.h" />
     <ClInclude Include="Shrinkler\LZEncoder.h" />
     <ClInclude Include="Shrinkler\LZParser.h" />
     <ClInclude Include="Shrinkler\MatchFinder.h" />
     <ClInclude Include="Shrinkler\Pack.h" />
     <ClInclude Include="Shrinkler\RangeCoder.h" />
-    <ClInclude Include="Shrinkler\RangeDecoder.h" />
     <ClInclude Include="Shrinkler\SizeMeasuringCoder.h" />
     <ClInclude Include="Shrinkler\SuffixArray.h" />
     <ClInclude Include="STrinkler.h" />

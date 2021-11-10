@@ -26,9 +26,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Shrinkler\AmigaWords.h">
-      <Filter>Shrinkler</Filter>
-    </ClInclude>
     <ClInclude Include="Shrinkler\assert.h">
       <Filter>Shrinkler</Filter>
     </ClInclude>
@@ -41,16 +38,7 @@
     <ClInclude Include="Shrinkler\CuckooHash.h">
       <Filter>Shrinkler</Filter>
     </ClInclude>
-    <ClInclude Include="Shrinkler\DataFile.h">
-      <Filter>Shrinkler</Filter>
-    </ClInclude>
-    <ClInclude Include="Shrinkler\Decoder.h">
-      <Filter>Shrinkler</Filter>
-    </ClInclude>
     <ClInclude Include="Shrinkler\Heap.h">
-      <Filter>Shrinkler</Filter>
-    </ClInclude>
-    <ClInclude Include="Shrinkler\LZDecoder.h">
       <Filter>Shrinkler</Filter>
     </ClInclude>
     <ClInclude Include="Shrinkler\LZEncoder.h">
@@ -66,9 +54,6 @@
       <Filter>Shrinkler</Filter>
     </ClInclude>
     <ClInclude Include="Shrinkler\RangeCoder.h">
-      <Filter>Shrinkler</Filter>
-    </ClInclude>
-    <ClInclude Include="Shrinkler\RangeDecoder.h">
       <Filter>Shrinkler</Filter>
     </ClInclude>
     <ClInclude Include="Shrinkler\SizeMeasuringCoder.h">
