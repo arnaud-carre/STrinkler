@@ -224,6 +224,10 @@ static bool	OutputMiniVersion(const BinaryBlob& bin, const Args& args, BinaryBlo
 				bout.AppendW16(sMiniHeader, sizeof(sMiniHeader) / sizeof(short));
 				bout.Append(codePack.GetData(), codePack.GetSize());
 				ret = true;
+
+				const int addedBytes = 0x1c + 4 + sizeof(sMiniHeader);
+				printf("Adding \"mini\" bootstrap header (%d bytes)...\n", addedBytes);
+
 			}
 			else
 			{
