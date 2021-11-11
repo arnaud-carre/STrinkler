@@ -17,9 +17,19 @@
 
 #define NUM_RELOC_CONTEXTS 256
 
-static const u16 sMiniHeader[] = 
+static const u16 sMiniHeader[] =
 {
 	#include "bootstrap/mini.h"
+};
+
+static const u16 sNormalHeader[] =
+{
+	#include "bootstrap/normal.h"
+};
+
+static const u16 sRelocationHeader[] =
+{
+	#include "bootstrap/relocation.h"
 };
 
 static void SetPreset(PackParams& params, int preset)
@@ -243,6 +253,66 @@ static bool	OutputMiniVersion(const BinaryBlob& bin, const Args& args, BinaryBlo
 	return ret;
 }
 
+static bool	OutputNormalVersion(const BinaryBlob& bin, const Args& args, BinaryBlob& bout, PackParams& packParams)
+{
+	bool ret = false;
+
+	BinaryBlob patchedInput;
+	patchedInput.Append(bin.GetData(), bin.GetSize());
+	patchedInput.Align(2);
+	int offset = 0;
+	for (int i = 0; i < bin.GetRelocCount(); i++)
+	{
+		int delta = bin.GetRelocOffset(i) - offset;
+		offset = bin.GetRelocOffset(i);
+		while (delta > 32766)
+		{
+			patchedInput.w16(0);
+			delta -= 32766;
+		}
+		patchedInput.w16(delta);
+	}
+	patchedInput.w16(0xffff);
+
+	BinaryBlob codePack;
+	if (ShrinklerDataPack(patchedInput, codePack, args, packParams))
+	{
+		codePack.Align(2);
+
+		int packedText = 4 + sizeof(sMiniHeader) + codePack.GetSize();
+		int depackedBss = bin.GetSize() + bin.GetBssSectionSize();
+
+		// write PRG header
+		bout.w16(0x601a);
+		bout.w32(packedText);
+		bout.w32(0);
+		bout.w32(depackedBss);
+		bout.w32(0);
+		bout.w32(0);
+		bout.w32(0);
+		bout.w16(0xffff);		// no relocation table
+
+		int packedDataOffset = 4 + sizeof(sMiniHeader) + codePack.GetSize(); // +4 for first lea n(pc),a5
+		if (packedDataOffset < 32768)
+		{
+			bout.w16(0x4bfa);		// lea n(pc),a5
+			bout.w16(packedDataOffset - 2);
+			bout.AppendW16(sMiniHeader, sizeof(sMiniHeader) / sizeof(short));
+			bout.Append(codePack.GetData(), codePack.GetSize());
+			ret = true;
+
+			const int addedBytes = 0x1c + sizeof(sNormalHeader);
+			printf("Adding \"normal\" bootstrap header (%d bytes)...\n", addedBytes);
+
+		}
+		else
+		{
+			printf("ERROR: packed data too large for -mini mode ( < 32KiB )\n");
+		}
+
+	}
+	return ret;
+}
 
 int main(int argc, char* argv[])
 {
@@ -299,8 +369,7 @@ int main(int argc, char* argv[])
 			}
 			else
 			{
-				printf("ERROR: This version only supports -mini mode for EXE\n");
-				return -1;
+				outOk = OutputNormalVersion(bin, args, bout, packParams);
 			}
 		}
 

@@ -43,6 +43,9 @@ public:
 	int		GetTextSectionSize() const { return m_codeSize; }
 	int		GetBssSectionSize() const { return m_bssSize; }
 
+	int		GetRelocCount() const { return m_relocSize; }
+	int		GetRelocOffset(int i) const { return m_relocTable[i]; }
+
 private:
 	u32		r32(int offset) const;
 	u16		r16(int offset) const;

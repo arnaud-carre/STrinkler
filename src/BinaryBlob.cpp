@@ -85,7 +85,7 @@ void	BinaryBlob::Append(const void* p, int size)
 {
 	if (m_size + size > m_reserve)
 	{
-		m_reserve += 64 * 1024;
+		m_reserve = m_size + size + 64*1024;
 		m_data = (u8*)realloc(m_data, m_reserve);
 	}
 	memcpy(m_data + m_size, p, size);
@@ -183,18 +183,18 @@ bool	BinaryBlob::AtariRelocParse(bool verbose)
 		readOffset += r32(2);	// text section
 		readOffset += r32(6);	// data section
 		readOffset += r32(14);	// symbol table size
-		if (readOffset < m_size)
+		if (readOffset+4 <= m_size)
 		{
 			int offset = r32(readOffset);
 			if (offset != 0)		// classic first 0 offset means no relocation
 			{
-				if (offset + 4 >= m_codeSize)			// 32bits reloc offset after code+data section!
+				if (offset + 4 > m_codeSize)			// 32bits reloc offset after code+data section!
 					return false;
 				m_relocTable[m_relocSize++] = offset;
 				readOffset += 4;
 				for (;;)
 				{
-					if (readOffset + 1 >= m_size)
+					if (readOffset + 1 > m_size)
 						return false;
 
 					u8 c = r8(readOffset++);
@@ -207,7 +207,7 @@ bool	BinaryBlob::AtariRelocParse(bool verbose)
 						offset += c;
 						if (m_relocSize >= kMaxRelocEntries)
 							return false;
-						if (offset + 4 >= m_codeSize)			// 32bits reloc offset after code+data section!
+						if (offset + 4 > m_codeSize)			// 32bits reloc offset after code+data section!
 							return false;
 						m_relocTable[m_relocSize++] = offset;
 					}

@@ -1,15 +1,31 @@
 ;------------------------------------------------------------
-; 
-; ATARI STrinkler "mini" bootstrap by Leonard/Oxygene
-; -mini version: minimal size, minimal compatibility (suited for 4KiB demos)
-;	- does not clear BSS
-;	- a7 does not point to exe BasePage
-;	- does not support relocation table
+;
+; ATARI STrinkler "normal" bootstrap by Leonard/Oxygene
+; -normal version: depack in place & relocation
+;
+;------------------------------------------------------------
+
+;	******************************00000000000		; original unpacked
+
+;	HPPPPPPPPPPD00000000000000000000000000000000	; packed just loaded
+
+;	H--------------------------------PPPPPPPPPPD	; move up
+
+;	******************************T0000000RPPPPD	; decrunch & reloc
+
+;	******************************00000000000PPD	; clear BSS
 
 
-		;lea		depackedSpace(pc),a5	; this LEA is inserted by STrinkler
 		lea		packedData(pc),a4
+		movea.l	a4,a5
+		add.l	#$12345678,a4
+		add.l	#$12345678,a5
+		move.l	#$12345678,d0
+copym:	move.w	-(a4),-(a5)
+		subq.l	#2,d0
+		bne.s	copym
 
+		move.l	a5,a6
 
 ;------------------------------------------------------------
 ;
@@ -43,8 +59,6 @@ ShrinklerDecompress:
 ;	move.l	a0,a4
 ;	move.l	a1,a5
 
-	
-	move.l	a5,a6
 
 	; Init range decoder state
 	moveq.l	#0,d2
@@ -102,7 +116,7 @@ ShrinklerDecompress:
 	sub.l	d7,d5
 	bne.b	.readlength
 
-;	lea.l	NUM_CONTEXTS*2(a7),a7
+	lea.l	NUM_CONTEXTS*2(a7),a7
 ;	movem.l	(a7)+,d2-d7/a4-a6
 
 ;	clr.l	-(a7)
