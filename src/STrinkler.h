@@ -22,13 +22,14 @@ struct Args
 		sOutFile = NULL;
 		data = false;
 		verbose = false;
-		preset = 3;
 		mini = false;
+		references = 100000;
 	}
+
 	const char*	sInfile;
 	const char* sOutFile;
 	bool data;
 	bool verbose;
-	int preset;
 	bool mini;
+	int references;
 };

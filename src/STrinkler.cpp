@@ -22,29 +22,47 @@ static const u16 sMiniHeader[] =
 	#include "bootstrap/mini.h"
 };
 
-
-
-bool	ShrinklerDataPack(const BinaryBlob& in, BinaryBlob& out, int preset)
+static void SetPreset(PackParams& params, int preset)
 {
-	printf("Shrinkler packing %d bytes (level %d)...\n", in.GetSize(), preset);
+	params.iterations = 1 * preset;
+	params.length_margin = 1 * preset;
+	params.skip_length = 1000 * preset;
+	params.match_patience = 100 * preset;	// effort
+	params.max_same_length = 10 * preset;
+}
+
+
+bool	ShrinklerDataPack(const BinaryBlob& in, BinaryBlob& out, const Args& args, PackParams& packParams)
+{
 	vector<unsigned> pack_buffer;
-	assert((preset >= 1) && (preset <= 9));
+
 	out.Release();
 	RangeCoder *range_coder = new RangeCoder(LZEncoder::NUM_CONTEXTS + NUM_RELOC_CONTEXTS, pack_buffer);
 
 	// Crunch the data
 	range_coder->reset();
 
-	PackParams params;
-	params.iterations = 1 * preset;
-	params.length_margin = 1 * preset;
-	params.skip_length = 1000 * preset;
-	params.match_patience = 100 * preset;
-	params.max_same_length = 10 * preset;
+	if (args.verbose)
+	{
+		printf("Shrinkler compressor parameters:\n"
+			"  iterations.....: %d\n"
+			"  length_margin..: %d\n"
+			"  skip_length....: %d\n"
+			"  match_patience.: %d\n"
+			"  max_same_length: %d\n"
+			"  references.....: %d\n",
+			packParams.iterations,
+			packParams.length_margin,
+			packParams.skip_length,
+			packParams.match_patience,
+			packParams.max_same_length,
+			args.references);
+	}
 
-	RefEdgeFactory edge_factory(100000);
+	printf("Shrinkler packing %d bytes...\n", in.GetSize());
+	RefEdgeFactory edge_factory(args.references);
 
-	packData(in.GetData(), in.GetSize(), 0, &params, range_coder, &edge_factory, false);
+	packData(in.GetData(), in.GetSize(), 0, &packParams, range_coder, &edge_factory, false);
 	range_coder->finish();
 	out.LoadFromW32(&pack_buffer[0], pack_buffer.size());
 	delete range_coder;
@@ -52,11 +70,33 @@ bool	ShrinklerDataPack(const BinaryBlob& in, BinaryBlob& out, int preset)
 	return true;
 }
 
-bool	ArgParsing(int argc, char* argv[], Args& args)
+
+static int	SetPresetOption(int argc, char* argv[], PackParams& packParams)
 {
-	int fileCount = 0;
 	for (int i = 1; i < argc; i++)
 	{
+		if ('-' == argv[i][0])
+		{
+			int p = atoi(argv[i] + 1);
+			if ((p >= 1) && (p <= 9))
+			{
+				SetPreset(packParams, p);
+				return i;
+			}
+		}
+	}
+	return -1;
+}
+
+bool	ArgParsing(int argc, char* argv[], Args& args, PackParams& packParams)
+{
+	int fileCount = 0;
+	int presetArg = SetPresetOption(argc, argv, packParams);
+	for (int i = 1; i < argc; i++)
+	{
+		if (i == presetArg)
+			continue;
+
 		if ('-' == argv[i][0])
 		{
 			if (0 == strcmp(argv[i], "-d"))
@@ -67,22 +107,44 @@ bool	ArgParsing(int argc, char* argv[], Args& args)
 			{
 				args.verbose = true;
 			}
+			else if (0 == strcmp(argv[i], "-i"))
+			{
+				packParams.iterations = atoi(argv[i + 1]);
+				i += 1;
+			}
+			else if (0 == strcmp(argv[i], "-l"))
+			{
+				packParams.length_margin = atoi(argv[i + 1]);
+				i += 1;
+			}
+			else if (0 == strcmp(argv[i], "-a"))
+			{
+				packParams.max_same_length = atoi(argv[i + 1]);
+				i += 1;
+			}
+			else if (0 == strcmp(argv[i], "-e"))
+			{
+				packParams.match_patience = atoi(argv[i + 1]);
+				i += 1;
+			}
+			else if (0 == strcmp(argv[i], "-s"))
+			{
+				packParams.skip_length = atoi(argv[i + 1]);
+				i += 1;
+			}
+			else if (0 == strcmp(argv[i], "-r"))
+			{
+				args.references = atoi(argv[i + 1]);
+				i += 1;
+			}
 			else if (0 == strcmp(argv[i],"-mini"))
 			{
 				args.mini = true;
 			}
 			else
 			{
-				int p = atoi(argv[i]+1);
-				if ((p >= 1) && (p <= 9))
-				{
-					args.preset = p;
-				}
-				else
-				{
-					printf("ERROR: Unknown option \"%s\"\n", argv[i]);
-					return false;
-				}
+				printf("ERROR: Unknown option \"%s\"\n", argv[i]);
+				return false;
 			}
 		}
 		else
@@ -101,21 +163,29 @@ bool	ArgParsing(int argc, char* argv[], Args& args)
 
 void	Usage()
 {
-	printf("Usage: STrinkler [option] <input file> <output file>\n\n");
+	printf("Usage: STrinkler [options] <input file> <output file>\n\n");
 	printf("Options:\n"
-		"  -1, ..., -9   compression level (low, best) (default=3)\n"
+		"  -1, ..., -9   compression level (low, best) (default=2)\n"
 		"  -mini         minimal PRG size, no relocation table, less compatibility\n"
-		"  -d            raw data mode\n");
+		"  -d            raw data mode\n"
+		"Advanced options:\n"
+		"  -i <n>        Number of iterations for the compression (2)\n"
+		"  -l <n>        Number of shorter matches considered for each match (2)\n"
+		"  -a <n>        Number of matches of the same length to consider (20)\n"
+		"  -e <n>        Perseverance in finding multiple matches (200)\n"
+		"  -s <n>        Minimum match length to accept greedily (2000)\n"
+		"  -r <n>        Number of reference edges to keep in memory (100000)\n"
+	);
 }
 
-static bool	OutputMiniVersion(const BinaryBlob& bin, const Args& args, BinaryBlob& bout)
+static bool	OutputMiniVersion(const BinaryBlob& bin, const Args& args, BinaryBlob& bout, PackParams& packParams)
 {
 	bool ret = false;
 	if (!bin.IsRelocationTable())
 	{
 		assert(!bin.IsRelocationTable());
 		BinaryBlob codePack;
-		if (ShrinklerDataPack(bin, codePack, args.preset))
+		if (ShrinklerDataPack(bin, codePack, args, packParams))
 		{
 			codePack.Align(2);
 
@@ -159,13 +229,17 @@ static bool	OutputMiniVersion(const BinaryBlob& bin, const Args& args, BinaryBlo
 int main(int argc, char* argv[])
 {
 	printf(	"STrinkler v0.1 - Atari 4KiB exe packer\n"
+			"Atari platform support by Leonard/Oxygene\n"
 			"Shrinkler compression technology by Blueberry/Loonies\n"
-			"Atari platform support by Leonard/Oxygene\n\n");
+			"\n");
 
 	int ret = 0;
 
+	PackParams packParams;
+	SetPreset(packParams, 2);		// default level=2
+
 	Args args;
-	if (!ArgParsing(argc, argv, args))
+	if (!ArgParsing(argc, argv, args, packParams))
 	{
 		Usage();
 		return -1;
@@ -181,7 +255,7 @@ int main(int argc, char* argv[])
 
 		if (args.data)
 		{
-			outOk = ShrinklerDataPack(bin, bout, args.preset);
+			outOk = ShrinklerDataPack(bin, bout, args, packParams);
 		}
 		else
 		{
@@ -203,7 +277,7 @@ int main(int argc, char* argv[])
 
 			if (args.mini)
 			{
-				outOk = OutputMiniVersion(bin, args, bout);
+				outOk = OutputMiniVersion(bin, args, bout, packParams);
 			}
 			else
 			{
