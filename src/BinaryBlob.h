@@ -27,7 +27,7 @@ public:
 
 	bool	IsAtariExecutable() const;
 	void	AtariCodeShrink();
-	void	AtariRelocParse();
+	bool	AtariRelocParse(bool verbose);
 	bool	IsRelocationTable() const { return m_relocSize > 0; }
 
 	void	Append(const void* p, int size);
@@ -49,8 +49,8 @@ private:
 
 
 	u8*		m_data;
-	int		m_size;
-	int		m_reserve;
+	u32		m_size;
+	u32		m_reserve;
 
 	int		m_codeSize;
 	int		m_bssSize;

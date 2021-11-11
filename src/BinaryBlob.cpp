@@ -53,6 +53,7 @@ bool	BinaryBlob::LoadFromFile(const char* sFilename)
 	FILE* h = fopen(sFilename, "rb");
 	if (h)
 	{
+		Release();
 		fseek(h, 0, SEEK_END);
 		m_size = ftell(h);
 		Reserve(m_size);
@@ -94,16 +95,14 @@ void	BinaryBlob::Append(const void* p, int size)
 void	BinaryBlob::Reserve(int size)
 {
 	m_reserve = size;
-	m_data = (u8*)malloc(size);
+	m_data = (u8*)realloc(m_data, size);
 }
 
 void	BinaryBlob::w8(u8 v)
 {
 	if (m_size >= m_reserve)
-	{
-		m_reserve += 64 * 1024;
-		m_data = (u8*)realloc(m_data, m_reserve);
-	}
+		Reserve(m_reserve + 64 * 1024);
+	assert(m_size < m_reserve);
 	m_data[m_size++] = v;
 }
 
@@ -170,13 +169,12 @@ void	BinaryBlob::AtariCodeShrink()
 	m_size = codeSize;
 }
 
-void	BinaryBlob::AtariRelocParse()
+bool	BinaryBlob::AtariRelocParse(bool verbose)
 {
 	assert(IsAtariExecutable());
 
 	m_codeSize = r32(2) + r32(6);
 	m_bssSize = r32(10);
-
 	m_relocSize = 0;
 	if (0 == r16(0x1a))		// if abs is non zero, then NO relocation table
 	{
@@ -188,12 +186,17 @@ void	BinaryBlob::AtariRelocParse()
 		if (readOffset < m_size)
 		{
 			int offset = r32(readOffset);
-			if (0 == offset)		// classic 0 first offset: no relocation
+			if (offset != 0)		// classic first 0 offset means no relocation
 			{
+				if (offset + 4 >= m_codeSize)			// 32bits reloc offset after code+data section!
+					return false;
 				m_relocTable[m_relocSize++] = offset;
 				readOffset += 4;
-				while (readOffset < m_size)
+				for (;;)
 				{
+					if (readOffset + 1 >= m_size)
+						return false;
+
 					u8 c = r8(readOffset++);
 					if (0 == c)
 						break;
@@ -203,21 +206,26 @@ void	BinaryBlob::AtariRelocParse()
 					{
 						offset += c;
 						if (m_relocSize >= kMaxRelocEntries)
-						{
-							printf("ERROR: Relocation table too big\n");
-							m_relocSize = -1;
-						}
+							return false;
+						if (offset + 4 >= m_codeSize)			// 32bits reloc offset after code+data section!
+							return false;
 						m_relocTable[m_relocSize++] = offset;
 					}
 				}
 			}
 		}
 		else
-		{
-			printf("ERROR: Relocation table error\n");
-			m_relocSize = -1;
-		}
+			return false;
 	}
+	if (verbose)
+	{
+		printf("ATARI exe infos:\n"
+			"  code+data.: %d bytes\n"
+			"  bss.......: %d bytes\n"
+			"  relocation: %d entrie(s)\n"
+			,m_codeSize, m_bssSize, m_relocSize);
+	}
+	return true;
 }
 
 bool	BinaryBlob::SaveFile(const char* sFilename)

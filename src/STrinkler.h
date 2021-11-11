@@ -16,9 +16,19 @@ typedef	unsigned int u32;
 
 struct Args 
 {
+	Args()
+	{
+		sInfile = NULL;
+		sOutFile = NULL;
+		data = false;
+		verbose = false;
+		preset = 3;
+		mini = false;
+	}
 	const char*	sInfile;
 	const char* sOutFile;
 	bool data;
+	bool verbose;
 	int preset;
 	bool mini;
 };

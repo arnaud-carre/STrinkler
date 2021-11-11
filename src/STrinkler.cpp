@@ -54,18 +54,18 @@ bool	ShrinklerDataPack(const BinaryBlob& in, BinaryBlob& out, int preset)
 
 bool	ArgParsing(int argc, char* argv[], Args& args)
 {
-	args.preset = 2;
-	args.data = false;
-	args.mini = false;
-
 	int fileCount = 0;
 	for (int i = 1; i < argc; i++)
 	{
 		if ('-' == argv[i][0])
 		{
-			if ('d' == argv[i][1])
+			if (0 == strcmp(argv[i], "-d"))
 			{
 				args.data = true;
+			}
+			else if (0 == strcmp(argv[i], "-v"))
+			{
+				args.verbose = true;
 			}
 			else if (0 == strcmp(argv[i],"-mini"))
 			{
@@ -103,10 +103,9 @@ void	Usage()
 {
 	printf("Usage: STrinkler [option] <input file> <output file>\n\n");
 	printf("Options:\n"
-		"  -1, ..., -9   compression level (low, best)\n"
+		"  -1, ..., -9   compression level (low, best) (default=3)\n"
 		"  -mini         minimal PRG size, no relocation table, less compatibility\n"
-		"  -d            raw data mode\n"
-	);
+		"  -d            raw data mode\n");
 }
 
 static bool	OutputMiniVersion(const BinaryBlob& bin, const Args& args, BinaryBlob& bout)
@@ -188,9 +187,13 @@ int main(int argc, char* argv[])
 		{
 			if (bin.IsAtariExecutable())
 			{
-				bin.AtariRelocParse();
-				bin.AtariCodeShrink();
-				bin.SaveFile("x:\\4ksos\\raw.bin");
+				if (bin.AtariRelocParse(args.verbose))
+					bin.AtariCodeShrink();
+				else
+				{
+					printf("ERROR: Atari EXE file relocation table corrupted\n");
+					return -1;
+				}
 			}
 			else
 			{
