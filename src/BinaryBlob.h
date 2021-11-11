@@ -24,6 +24,7 @@ public:
 	u8* GetData() const { return m_data; }
 	void	Reserve(int size);
 	bool	SaveFile(const char* sFilename);
+	void	Pad(int padLimit, const char* padText);
 
 	bool	IsAtariExecutable() const;
 	void	AtariCodeShrink();

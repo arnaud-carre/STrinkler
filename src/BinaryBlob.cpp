@@ -243,3 +243,28 @@ bool	BinaryBlob::SaveFile(const char* sFilename)
 	}
 	return ret;
 }
+
+void	BinaryBlob::Pad(int padLimit, const char* padText)
+{
+	if (m_size < padLimit)
+	{
+		printf("Padding output with %d bytes...\n", padLimit - m_size);
+		if (NULL == padText)
+		{
+			srand(m_size);
+			while (m_size < padLimit)
+				w8(rand() & 255);
+		}
+		else
+		{
+			const int sl = strlen(padText);
+			int p = 0;
+			while (m_size < padLimit)
+				w8(padText[(p++) % sl]);
+		}
+	}
+	else
+	{
+		printf("Warning: Can't add padding data (no more space)\n");
+	}
+}

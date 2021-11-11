@@ -24,6 +24,8 @@ struct Args
 		verbose = false;
 		mini = false;
 		references = 100000;
+		padSize = 0;
+		padText = NULL;
 	}
 
 	const char*	sInfile;
@@ -32,4 +34,6 @@ struct Args
 	bool verbose;
 	bool mini;
 	int references;
+	int padSize;
+	const char* padText;
 };

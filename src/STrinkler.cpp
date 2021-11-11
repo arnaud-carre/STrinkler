@@ -141,6 +141,18 @@ bool	ArgParsing(int argc, char* argv[], Args& args, PackParams& packParams)
 			{
 				args.mini = true;
 			}
+			else if (0 == strcmp(argv[i], "-pads"))
+			{
+				args.padSize = atoi(argv[i + 1]);
+				args.padText = argv[i + 2];
+				i += 2;
+			}
+			else if (0 == strcmp(argv[i], "-padr"))
+			{
+				args.padSize = atoi(argv[i + 1]);
+				args.padText = NULL;
+				i += 1;
+			}
 			else
 			{
 				printf("ERROR: Unknown option \"%s\"\n", argv[i]);
@@ -168,6 +180,8 @@ void	Usage()
 		"  -1, ..., -9   compression level (low, best) (default=2)\n"
 		"  -mini         minimal PRG size, no relocation table, less compatibility\n"
 		"  -d            raw data mode\n"
+		"  -pads <size> \"text\"  Pad till <size> using repeated <text>\n"
+		"  -padr <size>           Pad till <size> using random bytes\n"
 		"Advanced options:\n"
 		"  -i <n>        Number of iterations for the compression (2)\n"
 		"  -l <n>        Number of shorter matches considered for each match (2)\n"
@@ -288,6 +302,9 @@ int main(int argc, char* argv[])
 
 		if (outOk)
 		{
+			if (args.padSize > 0)
+				bout.Pad(args.padSize, args.padText);
+
 			printf("Saving \"%s\" (%d bytes)\n", args.sOutFile, bout.GetSize());
 			bout.SaveFile(args.sOutFile);
 		}
