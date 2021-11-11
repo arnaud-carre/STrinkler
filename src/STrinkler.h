@@ -1,3 +1,13 @@
+//-----------------------------------------------------------------
+//
+//	STrinkler, Atari exe packer suited for 4KiB demo
+//	Atari platform support by Leonard/Oxygene
+//	( https://github.com/arnaud-carre/STrinkler )
+//	
+//	Use Shrinkler packing technology by Simon Christensen
+//	( https://github.com/askeksa/Shrinkler )
+//
+//-----------------------------------------------------------------
 #pragma once
 
 typedef	unsigned char u8;

@@ -1,5 +1,14 @@
-// STrinkler.cpp : This file contains the 'main' function. Program execution begins and ends there.
+//-----------------------------------------------------------------
 //
+//	STrinkler, Atari exe packer suited for 4KiB demo
+//	Atari platform support by Leonard/Oxygene
+//	( https://github.com/arnaud-carre/STrinkler )
+//	
+//	Use Shrinkler packing technology by Simon Christensen
+//	( https://github.com/askeksa/Shrinkler )
+//
+//-----------------------------------------------------------------
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "STrinkler.h"
@@ -71,7 +80,7 @@ bool	ArgParsing(int argc, char* argv[], Args& args)
 				}
 				else
 				{
-					printf("ERROR: Unknow option %s\n", argv[i]);
+					printf("ERROR: Unknown option \"%s\"\n", argv[i]);
 					return false;
 				}
 			}
@@ -94,16 +103,65 @@ void	Usage()
 {
 	printf("Usage: STrinkler [option] <input file> <output file>\n\n");
 	printf("Options:\n"
-		"  -mini         minimal PRG size, not full compatibility\n"
+		"  -1, ..., -9   compression level (low, best)\n"
+		"  -mini         minimal PRG size, no relocation table, less compatibility\n"
 		"  -d            raw data mode\n"
-		"  -1, ..., -9   compression level (low, best)\n");
+	);
 }
+
+static bool	OutputMiniVersion(const BinaryBlob& bin, const Args& args, BinaryBlob& bout)
+{
+	bool ret = false;
+	if (!bin.IsRelocationTable())
+	{
+		assert(!bin.IsRelocationTable());
+		BinaryBlob codePack;
+		if (ShrinklerDataPack(bin, codePack, args.preset))
+		{
+			codePack.Align(2);
+
+			int packedText = 4 + sizeof(sMiniHeader) + codePack.GetSize();
+			int depackedBss = bin.GetSize() + bin.GetBssSectionSize();
+
+		// write PRG header
+			bout.w16(0x601a);
+			bout.w32(packedText);
+			bout.w32(0);
+			bout.w32(depackedBss);
+			bout.w32(0);
+			bout.w32(0);
+			bout.w32(0);
+			bout.w16(0xffff);		// no relocation table
+
+			int packedDataOffset = 4 + sizeof(sMiniHeader) + codePack.GetSize(); // +4 for first lea n(pc),a5
+			if (packedDataOffset < 32768)
+			{
+				bout.w16(0x4bfa);		// lea n(pc),a5
+				bout.w16(packedDataOffset - 2);
+				bout.AppendW16(sMiniHeader, sizeof(sMiniHeader) / sizeof(short));
+				bout.Append(codePack.GetData(), codePack.GetSize());
+				ret = true;
+			}
+			else
+			{
+				printf("ERROR: packed data too large for -mini mode ( < 32KiB )\n");
+			}
+
+		}
+	}
+	else
+	{
+		printf("ERROR: -mini mode doesn't support EXE with relocation table\n");
+	}
+	return ret;
+}
+
 
 int main(int argc, char* argv[])
 {
-	printf(	"STrinkler v0.1\n"
+	printf(	"STrinkler v0.1 - Atari 4KiB exe packer\n"
 			"Shrinkler compression technology by Simon Christensen\n"
-			"Atari Executable support by Leonard/Oxygene\n\n");
+			"Atari platform support by Leonard/Oxygene\n\n");
 
 	int ret = 0;
 
@@ -117,14 +175,14 @@ int main(int argc, char* argv[])
 	BinaryBlob bin;
 	BinaryBlob bout;
 
-	bool packOk = false;
-
 	printf("Loading input file \"%s\"\n", args.sInfile);
 	if (bin.LoadFromFile(args.sInfile))
 	{
+		bool outOk = false;
+
 		if (args.data)
 		{
-			packOk = ShrinklerDataPack(bin, bout, args.preset);
+			outOk = ShrinklerDataPack(bin, bout, args.preset);
 		}
 		else
 		{
@@ -142,50 +200,7 @@ int main(int argc, char* argv[])
 
 			if (args.mini)
 			{
-				if (!bin.IsRelocationTable())
-				{
-					assert(!bin.IsRelocationTable());
-					BinaryBlob codePack;
-					if (ShrinklerDataPack(bin, codePack, args.preset))
-					{
-						codePack.Align(2);
-
-						int packedText = 4 + sizeof(sMiniHeader) + codePack.GetSize();
-						int depackedBss = bin.GetSize() + bin.GetBssSectionSize();
-
-						// 4bfa: lea n(pc),a5
-						// write PRG header
-						bout.w16(0x601a);
-						bout.w32(packedText);
-						bout.w32(0);
-						bout.w32(depackedBss);
-						bout.w32(0);
-						bout.w32(0);
-						bout.w32(0);
-						bout.w16(0xffff);		// no relocation table
-
-						int packedDataOffset = 4 + sizeof(sMiniHeader) + codePack.GetSize();
-						if (packedDataOffset < 32768)
-						{
-							bout.w16(0x4bfa);		// lea n(pc),a5
-							bout.w16(packedDataOffset - 2);
-							bout.AppendW16(sMiniHeader, sizeof(sMiniHeader)/sizeof(short));
-							bout.Append(codePack.GetData(), codePack.GetSize());
-						}
-						else
-						{
-							printf("ERROR: packed data too large for -mini mode ( < 32KiB )\n");
-							return -1;
-						}
-
-					}
-
-				}
-				else
-				{
-					printf("ERROR: -mini mode doesn't support EXE with relocation table\n");
-					return -1;
-				}
+				outOk = OutputMiniVersion(bin, args, bout);
 			}
 			else
 			{
@@ -194,16 +209,11 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		printf("Saving \"%s\" (%d bytes)\n", args.sOutFile, bout.GetSize());
-		bout.SaveFile(args.sOutFile);
-
-/*
-		printf("  Atari EXE: %s\n", AtariExe ? "Yes" : "No");
-		printf("  Shrinkler packing %d bytes (using preset -%d)...\n", bin.GetSize(), args.preset);
-
-		ShrinklerDataPack(bin, bout, 3);
-		printf("  Packed down to %d bytes\n", bout.GetSize());
-*/
+		if (outOk)
+		{
+			printf("Saving \"%s\" (%d bytes)\n", args.sOutFile, bout.GetSize());
+			bout.SaveFile(args.sOutFile);
+		}
 	}
 	else
 	{
