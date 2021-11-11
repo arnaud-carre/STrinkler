@@ -4,7 +4,7 @@
 //	Atari platform support by Leonard/Oxygene
 //	( https://github.com/arnaud-carre/STrinkler )
 //	
-//	Use Shrinkler packing technology by Simon Christensen
+//	Use Shrinkler packing technology by Blueberry/Loonies
 //	( https://github.com/askeksa/Shrinkler )
 //
 //-----------------------------------------------------------------
@@ -160,7 +160,7 @@ static bool	OutputMiniVersion(const BinaryBlob& bin, const Args& args, BinaryBlo
 int main(int argc, char* argv[])
 {
 	printf(	"STrinkler v0.1 - Atari 4KiB exe packer\n"
-			"Shrinkler compression technology by Simon Christensen\n"
+			"Shrinkler compression technology by Blueberry/Loonies\n"
 			"Atari platform support by Leonard/Oxygene\n\n");
 
 	int ret = 0;

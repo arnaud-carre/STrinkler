@@ -4,7 +4,7 @@
 //	Atari platform support by Leonard/Oxygene
 //	( https://github.com/arnaud-carre/STrinkler )
 //	
-//	Use Shrinkler packing technology by Simon Christensen
+//	Use Shrinkler packing technology by Blueberry/Loonies
 //	( https://github.com/askeksa/Shrinkler )
 //
 //-----------------------------------------------------------------
