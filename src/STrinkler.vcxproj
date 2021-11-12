@@ -157,6 +157,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BinaryBlob.h" />
+    <ClInclude Include="bootstrap\mini.h" />
+    <ClInclude Include="bootstrap\normal.h" />
     <ClInclude Include="Shrinkler\assert.h" />
     <ClInclude Include="Shrinkler\Coder.h" />
     <ClInclude Include="Shrinkler\CountingCoder.h" />

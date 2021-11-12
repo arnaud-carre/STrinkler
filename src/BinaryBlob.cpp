@@ -40,6 +40,7 @@ void	BinaryBlob::Release()
 	m_data = NULL;
 	m_relocTable = NULL;
 	m_size = 0;
+	m_reserve = 0;
 }
 
 BinaryBlob::~BinaryBlob()
@@ -246,6 +247,7 @@ bool	BinaryBlob::SaveFile(const char* sFilename)
 
 int	BinaryBlob::Patch16(int offset, u16 marker, u16 value)
 {
+	assert(offset >= 0);
 	while (offset + 2 <= m_size)
 	{
 		if (r16(offset) == marker)
@@ -258,6 +260,13 @@ int	BinaryBlob::Patch16(int offset, u16 marker, u16 value)
 	}
 	printf("ERROR: STrinkler broken binary bootstraps!\n");
 	return -1;
+}
+
+int	BinaryBlob::Patch32(int offset, u32 marker, u32 value)
+{
+	offset = Patch16(offset, marker >> 16, value >> 16);
+	offset = Patch16(offset, marker&0xffff, value&0xffff);
+	return offset;
 }
 
 void	BinaryBlob::Pad(int padLimit, const char* padText)

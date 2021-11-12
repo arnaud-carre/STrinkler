@@ -15,8 +15,37 @@
 
 ;	******************************00000000000PPD	; clear BSS
 
+			move.l	4(a7),a6		; PRG basepage
 
-	movea.l	a5,a6
+		; update BasePage (for max compatibility)
+			move.l	8(a6),a0
+			
+			move.l	#$12345678,d0		; code section size
+			move.l	d0,12(a6)			
+			add.l	d0,a0
+			move.l	a0,24(a6)			; start of BSS segment
+			move.l	#$12345678,28(a6)	; size of BSS segment
+
+			lea		mEnd(pc),a0
+			moveq	#(mEnd-mStart)/2-1,d0
+copyc:		move.w	-(a0),-(a7)
+			dbf		d0,copyc
+			
+			lea		mEnd(pc),a5
+			movea.l	a5,a4
+			move.l	#$12345678,d0
+			add.l	d0,a5				; size (patched by STrinkler)
+			add.l	#$12345678,a4		; end of the big buffer
+			
+			jmp		(a7)
+
+mStart:
+			move.w	-(a5),-(a4)
+			subq.l	#2,d0
+			bne.s	mStart
+			
+			move.l	8(a6),a5			; code start address (from basepage)
+
 
 ;------------------------------------------------------------
 ;
@@ -82,7 +111,7 @@ ShrinklerDecompress:
 	; Literal
 	addq.b	#1,d6
 .getlit:
-	bsr.b	GetBit
+	bsr	GetBit
 	addx.b	d6,d6
 	bcc.b	.getlit
 	move.b	d6,(a5)+
@@ -112,16 +141,15 @@ ShrinklerDecompress:
 	sub.l	d7,d5
 	bne.b	.readlength
 
-	lea.l	NUM_CONTEXTS*2(a7),a7
+	lea.l	(NUM_CONTEXTS*2+mEnd-mStart)(a7),a7		; back to original a7
 
 ;--------------------------------------------------------------
 ; code relocation (using STrinkler specific relocation table)
 ;--------------------------------------------------------------
 mReloc:		
-			movea.l	a6,a1
-			move.l	a6,d1
+			move.l	8(a6),a1			; code start address (from basepage)
+			move.l	a1,d1
 			lea		$1234(a5),a5		; move back to start of relocation table (patched by STrinkler)
-			movea.l	a5,a0
 .rloop:		move.w	(a5)+,d0
 			bmi.s	.over
 			bne.s	.ok
@@ -133,9 +161,12 @@ mReloc:
 .over:		
 
 		; clear BSS
-
-
-
+			move.l	24(a6),a0	; start of BSS segment
+			move.l	28(a6),d0	; size of BSS segment
+.clbss:		clr.w	(a0)+
+			subq.l	#2,d0
+			bgt.s	.clbss
+			move.l	d1,a6
 
 			jmp		(a6)
 
@@ -212,4 +243,5 @@ GetBit:
 	add.w	d1,d2
 	; 1 in C and X
 	rts
-packedData:
+mEnd:
+	

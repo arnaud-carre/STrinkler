@@ -29,11 +29,6 @@ static const u16 sNormalHeader[] =
 	#include "bootstrap/normal.h"
 };
 
-static const u16 sNormalStartHeader[] =
-{
-	#include "bootstrap/normal_header.h"
-};
-
 static void SetPreset(PackParams& params, int preset)
 {
 	params.iterations = 1 * preset;
@@ -262,7 +257,7 @@ static bool	OutputNormalVersion(const BinaryBlob& bin, const Args& args, BinaryB
 	BinaryBlob patchedInput;
 	patchedInput.Append(bin.GetData(), bin.GetSize());
 	patchedInput.Align(2);
-	int newRelocTableOffset = patchedInput.GetSize();
+	const int newRelocTableOffset = patchedInput.GetSize();
 	int offset = 0;
 	for (int i = 0; i < bin.GetRelocCount(); i++)
 	{
@@ -276,16 +271,29 @@ static bool	OutputNormalVersion(const BinaryBlob& bin, const Args& args, BinaryB
 		patchedInput.w16(delta);
 	}
 	patchedInput.w16(0xffff);
+	const int relocTableSize = patchedInput.GetSize() - newRelocTableOffset;
 
 	BinaryBlob codePack;
 	if (ShrinklerDataPack(patchedInput, codePack, args, packParams))
 	{
 		codePack.Align(2);
 
-		int depackingCodeOffset = codePack.GetSize();
+		int packedText = sizeof(sNormalHeader) + codePack.GetSize();
 
-		int packedText = sizeof(sNormalStartHeader) + codePack.GetSize() + sizeof(sNormalHeader);
-		int bigBufferSize = patchedInput.GetSize() + bin.GetBssSectionSize() + sizeof(sNormalStartHeader) + sizeof(sNormalHeader) + kSafetyMargin;
+		const int depackingBufferSize = sizeof(sNormalHeader) + patchedInput.GetSize() + kSafetyMargin;
+		const int originalExeBufferSize = bin.GetSize() + bin.GetBssSectionSize();
+		int bigBufferSize = std::max(depackingBufferSize, originalExeBufferSize);
+
+		if (bigBufferSize > originalExeBufferSize)
+		{
+			const int addMem = (bigBufferSize - originalExeBufferSize + 1023) >> 10;
+			printf("\"Depack in place\" will use %dKiB additional memory\n", addMem);
+		}
+		else
+		{
+			printf("\"Depack in place\" won't waste additional memory\n");
+		}
+
 		assert(packedText <= bigBufferSize);
 
 		// write PRG header
@@ -298,26 +306,20 @@ static bool	OutputNormalVersion(const BinaryBlob& bin, const Args& args, BinaryB
 		bout.w32(0);
 		bout.w16(0xffff);		// relocation table
 
-		// write copyloop bootstrap
-		bout.AppendW16(sNormalStartHeader, sizeof(sNormalStartHeader) / 2);
+		// write header bootstrap
+		bout.AppendW16(sNormalHeader, sizeof(sNormalHeader) / 2);
 		int offs = 0x1c;
-		offs = bout.Patch16(offs, 0x1234, packedText >> 16);
-		offs = bout.Patch16(offs, 0x5678, packedText&0xffff);
-		offs = bout.Patch16(offs, 0x1234, bigBufferSize >> 16);
-		offs = bout.Patch16(offs, 0x5678, bigBufferSize & 0xffff);
-		offs = bout.Patch16(offs, 0x4afc, -int(sizeof(sNormalHeader)));
+
+		offs = bout.Patch32(offs, 0x12345678, bin.GetTextSectionSize());
+		offs = bout.Patch32(offs, 0x12345678, bin.GetBssSectionSize());
+		offs = bout.Patch32(offs, 0x12345678, packedText);
+		offs = bout.Patch32(offs, 0x12345678, bigBufferSize);
+		bout.Patch16(offs, 0x1234, -relocTableSize);
 
 		// packed data
 		bout.Append(codePack.GetData(), codePack.GetSize());
 
-		// decrunch code
-		offs = bout.GetSize();
-		bout.AppendW16(sNormalHeader, sizeof(sNormalHeader) / 2);
-
-		const int relocTableSize = (bin.GetRelocCount() + 1) * 2;
-		bout.Patch16(offs, 0x1234, -relocTableSize);
-
-		const int addedBytes = 0x1c + sizeof(sNormalStartHeader) + sizeof(sNormalHeader);
+		const int addedBytes = 0x1c + sizeof(sNormalHeader);
 		printf("Adding \"normal\" bootstrap header (%d bytes)...\n", addedBytes);
 
 		ret = true;

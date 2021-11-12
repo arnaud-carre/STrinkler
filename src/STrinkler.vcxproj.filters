@@ -16,6 +16,9 @@
     <Filter Include="Shrinkler">
       <UniqueIdentifier>{1a2ab783-a085-401c-908a-033e9888ad44}</UniqueIdentifier>
     </Filter>
+    <Filter Include="bootstraps">
+      <UniqueIdentifier>{01dcdb0c-cb46-43e1-a4e6-4fd6f970ad7f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="STrinkler.cpp">
@@ -67,6 +70,12 @@
     </ClInclude>
     <ClInclude Include="BinaryBlob.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bootstrap\mini.h">
+      <Filter>bootstraps</Filter>
+    </ClInclude>
+    <ClInclude Include="bootstrap\normal.h">
+      <Filter>bootstraps</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
