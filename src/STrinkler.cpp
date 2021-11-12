@@ -187,6 +187,7 @@ void	Usage()
 		"  -1, ..., -9   compression level (low, best) (default=2)\n"
 		"  -mini         minimal PRG size, no relocation table, less compatibility\n"
 		"  -d            raw data mode\n"
+		"  -v            verbose\n"
 		"  -pads <size> \"text\"  Pad till <size> using repeated <text>\n"
 		"  -padr <size>           Pad till <size> using random bytes\n"
 		"Advanced options:\n"
