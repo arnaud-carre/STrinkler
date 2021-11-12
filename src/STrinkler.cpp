@@ -15,6 +15,8 @@
 #include "BinaryBlob.h"
 #include "Shrinkler/Pack.h"
 
+static const int	kSafetyMargin = 32 * 1024;
+
 #define NUM_RELOC_CONTEXTS 256
 
 static const u16 sMiniHeader[] =
@@ -27,9 +29,9 @@ static const u16 sNormalHeader[] =
 	#include "bootstrap/normal.h"
 };
 
-static const u16 sRelocationHeader[] =
+static const u16 sNormalStartHeader[] =
 {
-	#include "bootstrap/relocation.h"
+	#include "bootstrap/normal_header.h"
 };
 
 static void SetPreset(PackParams& params, int preset)
@@ -260,6 +262,7 @@ static bool	OutputNormalVersion(const BinaryBlob& bin, const Args& args, BinaryB
 	BinaryBlob patchedInput;
 	patchedInput.Append(bin.GetData(), bin.GetSize());
 	patchedInput.Align(2);
+	int newRelocTableOffset = patchedInput.GetSize();
 	int offset = 0;
 	for (int i = 0; i < bin.GetRelocCount(); i++)
 	{
@@ -279,36 +282,45 @@ static bool	OutputNormalVersion(const BinaryBlob& bin, const Args& args, BinaryB
 	{
 		codePack.Align(2);
 
-		int packedText = 4 + sizeof(sMiniHeader) + codePack.GetSize();
-		int depackedBss = bin.GetSize() + bin.GetBssSectionSize();
+		int depackingCodeOffset = codePack.GetSize();
+
+		int packedText = sizeof(sNormalStartHeader) + codePack.GetSize() + sizeof(sNormalHeader);
+		int bigBufferSize = patchedInput.GetSize() + bin.GetBssSectionSize() + sizeof(sNormalStartHeader) + sizeof(sNormalHeader) + kSafetyMargin;
+		assert(packedText <= bigBufferSize);
 
 		// write PRG header
 		bout.w16(0x601a);
 		bout.w32(packedText);
 		bout.w32(0);
-		bout.w32(depackedBss);
+		bout.w32(bigBufferSize-packedText);
 		bout.w32(0);
 		bout.w32(0);
 		bout.w32(0);
-		bout.w16(0xffff);		// no relocation table
+		bout.w16(0xffff);		// relocation table
 
-		int packedDataOffset = 4 + sizeof(sMiniHeader) + codePack.GetSize(); // +4 for first lea n(pc),a5
-		if (packedDataOffset < 32768)
-		{
-			bout.w16(0x4bfa);		// lea n(pc),a5
-			bout.w16(packedDataOffset - 2);
-			bout.AppendW16(sMiniHeader, sizeof(sMiniHeader) / sizeof(short));
-			bout.Append(codePack.GetData(), codePack.GetSize());
-			ret = true;
+		// write copyloop bootstrap
+		bout.AppendW16(sNormalStartHeader, sizeof(sNormalStartHeader) / 2);
+		int offs = 0x1c;
+		offs = bout.Patch16(offs, 0x1234, packedText >> 16);
+		offs = bout.Patch16(offs, 0x5678, packedText&0xffff);
+		offs = bout.Patch16(offs, 0x1234, bigBufferSize >> 16);
+		offs = bout.Patch16(offs, 0x5678, bigBufferSize & 0xffff);
+		offs = bout.Patch16(offs, 0x4afc, -int(sizeof(sNormalHeader)));
 
-			const int addedBytes = 0x1c + sizeof(sNormalHeader);
-			printf("Adding \"normal\" bootstrap header (%d bytes)...\n", addedBytes);
+		// packed data
+		bout.Append(codePack.GetData(), codePack.GetSize());
 
-		}
-		else
-		{
-			printf("ERROR: packed data too large for -mini mode ( < 32KiB )\n");
-		}
+		// decrunch code
+		offs = bout.GetSize();
+		bout.AppendW16(sNormalHeader, sizeof(sNormalHeader) / 2);
+
+		const int relocTableSize = (bin.GetRelocCount() + 1) * 2;
+		bout.Patch16(offs, 0x1234, -relocTableSize);
+
+		const int addedBytes = 0x1c + sizeof(sNormalStartHeader) + sizeof(sNormalHeader);
+		printf("Adding \"normal\" bootstrap header (%d bytes)...\n", addedBytes);
+
+		ret = true;
 
 	}
 	return ret;

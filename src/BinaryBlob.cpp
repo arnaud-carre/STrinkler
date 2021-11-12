@@ -244,6 +244,22 @@ bool	BinaryBlob::SaveFile(const char* sFilename)
 	return ret;
 }
 
+int	BinaryBlob::Patch16(int offset, u16 marker, u16 value)
+{
+	while (offset + 2 <= m_size)
+	{
+		if (r16(offset) == marker)
+		{
+			m_data[offset + 0] = value >> 8;
+			m_data[offset + 1] = value&255;
+			return offset + 2;
+		}
+		offset += 2;
+	}
+	printf("ERROR: STrinkler broken binary bootstraps!\n");
+	return -1;
+}
+
 void	BinaryBlob::Pad(int padLimit, const char* padText)
 {
 	if (m_size < padLimit)

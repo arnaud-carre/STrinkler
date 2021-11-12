@@ -46,6 +46,8 @@ public:
 	int		GetRelocCount() const { return m_relocSize; }
 	int		GetRelocOffset(int i) const { return m_relocTable[i]; }
 
+	int		Patch16(int offset, u16 marker, u16 value);
+
 private:
 	u32		r32(int offset) const;
 	u16		r16(int offset) const;

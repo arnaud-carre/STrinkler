@@ -16,16 +16,7 @@
 ;	******************************00000000000PPD	; clear BSS
 
 
-		lea		packedData(pc),a4
-		movea.l	a4,a5
-		add.l	#$12345678,a4
-		add.l	#$12345678,a5
-		move.l	#$12345678,d0
-copym:	move.w	-(a4),-(a5)
-		subq.l	#2,d0
-		bne.s	copym
-
-		move.l	a5,a6
+	movea.l	a5,a6
 
 ;------------------------------------------------------------
 ;
@@ -52,6 +43,11 @@ INIT_ONE_PROB		=	$8000
 ADJUST_SHIFT		=	4
 SINGLE_BIT_CONTEXTS	=	1
 NUM_CONTEXTS		=	1536
+
+; input:
+;	a4: packed data
+;	a5: output buffer
+
 
 ShrinklerDecompress:
 ;	movem.l	d2-d7/a4-a6,-(a7)
@@ -117,17 +113,32 @@ ShrinklerDecompress:
 	bne.b	.readlength
 
 	lea.l	NUM_CONTEXTS*2(a7),a7
-;	movem.l	(a7)+,d2-d7/a4-a6
 
-;	clr.l	-(a7)
-;	move.w	#32,-(a7)
-;	trap	#1
-;.cloop:
-;	move.w	d0,$ffff8240.w
-;	addq.w	#1,d0
-;	bra.s	.cloop
+;--------------------------------------------------------------
+; code relocation (using STrinkler specific relocation table)
+;--------------------------------------------------------------
+mReloc:		
+			movea.l	a6,a1
+			move.l	a6,d1
+			lea		$1234(a5),a5		; move back to start of relocation table (patched by STrinkler)
+			movea.l	a5,a0
+.rloop:		move.w	(a5)+,d0
+			bmi.s	.over
+			bne.s	.ok
+			lea		32766(a1),a1
+			bra.s	.rloop
+.ok:		add.w	d0,a1
+			add.l	d1,(a1)
+			bra.s	.rloop
+.over:		
 
-	jmp		(a6)
+		; clear BSS
+
+
+
+
+			jmp		(a6)
+
 
 GetKind:
 	; Use parity as context
