@@ -211,7 +211,7 @@ static bool	OutputMiniVersion(const BinaryBlob& bin, const Args& args, BinaryBlo
 		{
 			codePack.Align(2);
 
-			int packedText = 4 + sizeof(sMiniHeader) + codePack.GetSize();
+			int packedText = sizeof(sMiniHeader) + codePack.GetSize();
 			int depackedBss = bin.GetSize() + bin.GetBssSectionSize();
 
 		// write PRG header
@@ -224,16 +224,15 @@ static bool	OutputMiniVersion(const BinaryBlob& bin, const Args& args, BinaryBlo
 			bout.w32(0);
 			bout.w16(0xffff);		// no relocation table
 
-			int packedDataOffset = 4 + sizeof(sMiniHeader) + codePack.GetSize(); // +4 for first lea n(pc),a5
+			int packedDataOffset = sizeof(sMiniHeader) + codePack.GetSize(); // +4 for first lea n(pc),a5
 			if (packedDataOffset < 32768)
 			{
-				bout.w16(0x4bfa);		// lea n(pc),a5
-				bout.w16(packedDataOffset - 2);
 				bout.AppendW16(sMiniHeader, sizeof(sMiniHeader) / sizeof(short));
+				bout.Patch16(0x1c, 0x1234, packedDataOffset);
 				bout.Append(codePack.GetData(), codePack.GetSize());
 				ret = true;
 
-				const int addedBytes = 0x1c + 4 + sizeof(sMiniHeader);
+				const int addedBytes = 0x1c + sizeof(sMiniHeader);
 				printf("Adding \"mini\" bootstrap header (%d bytes)...\n", addedBytes);
 
 			}
@@ -305,7 +304,7 @@ static bool	OutputNormalVersion(const BinaryBlob& bin, const Args& args, BinaryB
 		bout.w32(0);
 		bout.w32(0);
 		bout.w32(0);
-		bout.w16(0xffff);		// relocation table
+		bout.w16(0xffff);		// no relocation table (the real one is packed)
 
 		// write header bootstrap
 		bout.AppendW16(sNormalHeader, sizeof(sNormalHeader) / 2);

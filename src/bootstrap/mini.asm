@@ -7,9 +7,8 @@
 ;	- does not support relocation table
 
 
-		;lea		depackedSpace(pc),a5	; this LEA is inserted by STrinkler
 		lea		packedData(pc),a4
-
+		lea		$1234(a4),a5		; this LEA is patched by STrinkler
 
 ;------------------------------------------------------------
 ;
