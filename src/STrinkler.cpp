@@ -185,11 +185,10 @@ void	Usage()
 	printf("Usage: STrinkler [options] <input file> <output file>\n\n");
 	printf("Options:\n"
 		"  -1, ..., -9   compression level (low, best) (default=2)\n"
-		"  -mini         minimal PRG size, no relocation table, less compatibility\n"
+		"  -mini         minimal PRG size, less compatibility (suited for 4KiB demo)\n"
 		"  -d            raw data mode\n"
 		"  -v            verbose\n"
-		"  -pads <size> \"text\"  Pad till <size> using repeated <text>\n"
-		"  -padr <size>           Pad till <size> using random bytes\n"
+		"  -padr <size>  Pad till <size> using random bytes\n"
 		"Advanced options:\n"
 		"  -i <n>        Number of iterations for the compression (2)\n"
 		"  -l <n>        Number of shorter matches considered for each match (2)\n"
