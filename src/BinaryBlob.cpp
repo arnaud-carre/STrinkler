@@ -156,7 +156,10 @@ bool	BinaryBlob::IsAtariExecutable() const
 	endOffset += r32(14);	// symbol table size
 
 	if (endOffset > m_size)
+	{
+		printf("ERROR: PRG header CODE+DATA size doesn't match with file size\n");
 		return false;
+	}
 
 	return true;
 }
