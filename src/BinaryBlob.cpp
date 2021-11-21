@@ -173,12 +173,17 @@ void	BinaryBlob::AtariCodeShrink()
 	m_size = codeSize;
 }
 
+int	Round2Word(int v)
+{
+	return (v + 1)&(-2);
+}
+
 bool	BinaryBlob::AtariRelocParse(bool verbose)
 {
 	assert(IsAtariExecutable());
 
-	m_codeSize = r32(2) + r32(6);
-	m_bssSize = r32(10);
+	m_codeSize = Round2Word(r32(2)) + Round2Word(r32(6));
+	m_bssSize = Round2Word(r32(10));
 	m_relocSize = 0;
 	if (0 == r16(0x1a))		// if abs is non zero, then NO relocation table
 	{

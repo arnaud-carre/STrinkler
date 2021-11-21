@@ -14,8 +14,8 @@
 #include "STrinkler.h"
 #include "BinaryBlob.h"
 #include "Shrinkler/Pack.h"
-
-static const int	kSafetyMargin = 32 * 1024;
+#include "Shrinkler/RangeDecoder.h"
+#include "Shrinkler/LZDecoder.h"
 
 #define NUM_RELOC_CONTEXTS 256
 
@@ -39,7 +39,38 @@ static void SetPreset(PackParams& params, int preset)
 }
 
 
-bool	ShrinklerDataPack(const BinaryBlob& in, BinaryBlob& out, const Args& args, PackParams& packParams)
+bool	ShrinklerVerify(vector<unsigned>& pack_buffer, u8* unpackedData, int unpackedSize, int& safetyMargin)
+{
+	bool ret = false;
+	RangeDecoder decoder(LZEncoder::NUM_CONTEXTS + NUM_RELOC_CONTEXTS, pack_buffer);
+	LZDecoder lzd(&decoder);
+
+	// Verify data
+	LZVerifier verifier(0, unpackedData, unpackedSize, unpackedSize);
+	decoder.reset();
+	decoder.setListener(&verifier);
+	if (lzd.decode(verifier))
+	{
+		// Check length
+		if (verifier.size() == unpackedSize)
+		{
+			safetyMargin = verifier.front_overlap_margin + pack_buffer.size() * 4 - unpackedSize;
+			ret = true;
+		}
+		else
+		{
+			printf("ERROR: Data has incorrect length (%d, should have been %d)!\n", verifier.size(), (int)unpackedSize);
+		}
+	}
+	else
+	{
+		printf("ERROR: Depacking check failed!\n");
+	}
+	return ret;
+}
+
+
+bool	ShrinklerDataPack(const BinaryBlob& in, BinaryBlob& out, const Args& args, PackParams& packParams, int& safetyMargin)
 {
 	vector<unsigned> pack_buffer;
 
@@ -74,7 +105,17 @@ bool	ShrinklerDataPack(const BinaryBlob& in, BinaryBlob& out, const Args& args, 
 	out.LoadFromW32(&pack_buffer[0], pack_buffer.size());
 	delete range_coder;
 	printf("  Packed to %d bytes!\n", out.GetSize());
-	return true;
+
+	// verify
+	safetyMargin = 0;
+	if (ShrinklerVerify(pack_buffer, in.GetData(), in.GetSize(), safetyMargin))
+	{
+		if ( args.verbose )
+			printf("Safe margin=%d bytes\n", safetyMargin);
+		return true;
+	}
+
+	return false;
 }
 
 
@@ -206,7 +247,8 @@ static bool	OutputMiniVersion(const BinaryBlob& bin, const Args& args, BinaryBlo
 	{
 		assert(!bin.IsRelocationTable());
 		BinaryBlob codePack;
-		if (ShrinklerDataPack(bin, codePack, args, packParams))
+		int safetyMargin;
+		if (ShrinklerDataPack(bin, codePack, args, packParams, safetyMargin))
 		{
 			codePack.Align(2);
 
@@ -273,13 +315,19 @@ static bool	OutputNormalVersion(const BinaryBlob& bin, const Args& args, BinaryB
 	const int relocTableSize = patchedInput.GetSize() - newRelocTableOffset;
 
 	BinaryBlob codePack;
-	if (ShrinklerDataPack(patchedInput, codePack, args, packParams))
+	int safetyMargin;
+	if (ShrinklerDataPack(patchedInput, codePack, args, packParams, safetyMargin))
 	{
 		codePack.Align(2);
 
 		int packedText = sizeof(sNormalHeader) + codePack.GetSize();
+		if (safetyMargin < 0)
+			safetyMargin = 0;
+		safetyMargin = (safetyMargin+4)&(-4);			// we're reading byte instead of 32bits in Atari version ( on purpose +4 instead of +3 )
+		if (args.verbose)
+			printf("Normal header mode final safety margin: %d bytes\n", safetyMargin);
 
-		const int depackingBufferSize = sizeof(sNormalHeader) + patchedInput.GetSize() + kSafetyMargin;
+		const int depackingBufferSize = sizeof(sNormalHeader) + patchedInput.GetSize() + safetyMargin;
 		const int originalExeBufferSize = bin.GetSize() + bin.GetBssSectionSize();
 		int bigBufferSize = std::max(depackingBufferSize, originalExeBufferSize);
 
@@ -356,7 +404,8 @@ int main(int argc, char* argv[])
 
 		if (args.data)
 		{
-			outOk = ShrinklerDataPack(bin, bout, args, packParams);
+			int safetyMargin;
+			outOk = ShrinklerDataPack(bin, bout, args, packParams, safetyMargin);
 		}
 		else
 		{
