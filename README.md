@@ -24,7 +24,10 @@ Advanced options:
   -r <n>        Number of reference edges to keep in memory (100000)
 ```
 
+Follow me on Twitter [@leonard_coder](https://twitter.com/leonard_coder) )
+
 ## History
 
 v0.10
 - First public version
+
