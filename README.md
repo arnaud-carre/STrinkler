@@ -23,3 +23,8 @@ Advanced options:
   -s <n>        Minimum match length to accept greedily (2000)
   -r <n>        Number of reference edges to keep in memory (100000)
 ```
+
+## History
+
+v0.10
+- First public version
