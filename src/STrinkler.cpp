@@ -111,7 +111,7 @@ bool	ShrinklerDataPack(const BinaryBlob& in, BinaryBlob& out, const Args& args, 
 	if (ShrinklerVerify(pack_buffer, in.GetData(), in.GetSize(), safetyMargin))
 	{
 		if ( args.verbose )
-			printf("Safe margin=%d bytes\n", safetyMargin);
+			printf("  Verify safety margin=%d bytes\n", safetyMargin);
 		return true;
 	}
 
@@ -321,11 +321,9 @@ static bool	OutputNormalVersion(const BinaryBlob& bin, const Args& args, BinaryB
 		codePack.Align(2);
 
 		int packedText = sizeof(sNormalHeader) + codePack.GetSize();
-		if (safetyMargin < 0)
+		if (safetyMargin < 0)	// negative safety margin means end of packed could be before end of unpacked
 			safetyMargin = 0;
-		safetyMargin = (safetyMargin+4)&(-4);			// we're reading byte instead of 32bits in Atari version ( on purpose +4 instead of +3 )
-		if (args.verbose)
-			printf("Normal header mode final safety margin: %d bytes\n", safetyMargin);
+		safetyMargin = (safetyMargin+3+1)&(-2);			// we're reading byte instead of 32bits in Atari version ( on purpose +4 instead of +3 )
 
 		const int depackingBufferSize = sizeof(sNormalHeader) + patchedInput.GetSize() + safetyMargin;
 		const int originalExeBufferSize = bin.GetSize() + bin.GetBssSectionSize();
