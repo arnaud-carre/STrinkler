@@ -24,6 +24,8 @@ Advanced options:
   -r <n>        Number of reference edges to keep in memory (100000)
 ```
 
+You can comment on [Pouet](https://www.pouet.net/prod.php?which=90348)
+
 Follow me on Twitter [@leonard_coder](https://twitter.com/leonard_coder) )
 
 ## History
