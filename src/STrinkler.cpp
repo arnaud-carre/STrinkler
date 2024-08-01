@@ -274,7 +274,7 @@ static bool	OutputMiniVersion(const BinaryBlob& bin, const Args& args, BinaryBlo
 				ret = true;
 
 				const int addedBytes = 0x1c + sizeof(sMiniHeader);
-				printf("Adding \"mini\" bootstrap header (%d bytes)...\n", addedBytes);
+				printf("  Adding \"mini\" bootstrap header (%d bytes)...\n", addedBytes);
 
 			}
 			else
@@ -365,7 +365,7 @@ static bool	OutputNormalVersion(const BinaryBlob& bin, const Args& args, BinaryB
 		bout.Append(codePack.GetData(), codePack.GetSize());
 
 		const int addedBytes = 0x1c + sizeof(sNormalHeader);
-		printf("Adding \"normal\" bootstrap header (%d bytes)...\n", addedBytes);
+		printf("  Adding \"normal\" bootstrap header (%d bytes)...\n", addedBytes);
 
 		ret = true;
 
@@ -435,6 +435,7 @@ int main(int argc, char* argv[])
 
 		if (outOk)
 		{
+			printf("  Final EXE file size: %d bytes\n", bout.GetSize());
 			if (args.padSize > 0)
 				bout.Pad(args.padSize, args.padText);
 

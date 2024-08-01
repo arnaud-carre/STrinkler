@@ -281,7 +281,7 @@ void	BinaryBlob::Pad(int padLimit, const char* padText)
 {
 	if (m_size < padLimit)
 	{
-		printf("Padding output with %d bytes...\n", padLimit - m_size);
+		printf("  Padding output with %d bytes...\n", padLimit - m_size);
 		if (NULL == padText)
 		{
 			srand(m_size);
