@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <cstring>
 #include "STrinkler.h"
 #include "BinaryBlob.h"
 #include "Shrinkler/Pack.h"
