@@ -150,7 +150,7 @@ bool	BinaryBlob::IsAtariExecutable() const
 	if (r16(0) != 0x601a)
 		return false;
 
-	u32 endOffset = 0x1c;
+	int endOffset = 0x1c;
 	endOffset += r32(2);		// text section
 	endOffset += r32(6);	// data section
 	endOffset += r32(14);	// symbol table size
@@ -188,7 +188,7 @@ bool	BinaryBlob::AtariRelocParse(bool verbose)
 	if (0 == r16(0x1a))		// if abs is non zero, then NO relocation table
 	{
 		m_relocTable = (int*)malloc(kMaxRelocEntries * sizeof(int));
-		u32 readOffset = 0x1c;
+		int readOffset = 0x1c;
 		readOffset += r32(2);	// text section
 		readOffset += r32(6);	// data section
 		readOffset += r32(14);	// symbol table size
@@ -290,7 +290,7 @@ void	BinaryBlob::Pad(int padLimit, const char* padText)
 		}
 		else
 		{
-			const int sl = strlen(padText);
+			const int sl = int(strlen(padText));
 			int p = 0;
 			while (m_size < padLimit)
 				w8(padText[(p++) % sl]);

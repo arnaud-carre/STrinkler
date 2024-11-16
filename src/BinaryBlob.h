@@ -56,8 +56,8 @@ private:
 
 
 	u8*		m_data;
-	u32		m_size;
-	u32		m_reserve;
+	int		m_size;
+	int		m_reserve;
 
 	int		m_codeSize;
 	int		m_bssSize;

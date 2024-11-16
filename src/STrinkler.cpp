@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "STrinkler.h"
 #include "BinaryBlob.h"
 #include "Shrinkler/Pack.h"
@@ -54,7 +55,7 @@ bool	ShrinklerVerify(vector<unsigned>& pack_buffer, u8* unpackedData, int unpack
 		// Check length
 		if (verifier.size() == unpackedSize)
 		{
-			safetyMargin = verifier.front_overlap_margin + pack_buffer.size() * 4 - unpackedSize;
+			safetyMargin = verifier.front_overlap_margin + int(pack_buffer.size()) * 4 - unpackedSize;
 			ret = true;
 		}
 		else
@@ -102,7 +103,7 @@ bool	ShrinklerDataPack(const BinaryBlob& in, BinaryBlob& out, const Args& args, 
 
 	packData(in.GetData(), in.GetSize(), 0, &packParams, range_coder, &edge_factory, false);
 	range_coder->finish();
-	out.LoadFromW32(&pack_buffer[0], pack_buffer.size());
+	out.LoadFromW32(&pack_buffer[0], int(pack_buffer.size()));
 	delete range_coder;
 	printf("  Packed to %d bytes!\n", out.GetSize());
 
