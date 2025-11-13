@@ -28,6 +28,11 @@ You can comment on [Pouet](https://www.pouet.net/prod.php?which=90348)
 
 Follow me on Twitter [@leonard_coder](https://twitter.com/leonard_coder) )
 
+## Note for large exes
+
+STrinkler is your best option for 4KiB demo, no contest.
+But for larger exe (like 64KiB or more), the depacking time could very big. In this case, if you can afford slightly less compression ratio, you should try [L-Packer](https://github.com/arnaud-carre/L-Packer) (It depacks fast and always beats UPX in size)
+
 ## History
 
 v0.10
